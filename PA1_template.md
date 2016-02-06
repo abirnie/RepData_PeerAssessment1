@@ -7,7 +7,7 @@ NOTE: Make sure data zip file is unzipped in working directory before running fo
 
 
 ```r
-# load dplyr
+# load libraries
 library(dplyr)
 ```
 
@@ -25,6 +25,22 @@ library(dplyr)
 ```
 
 ```r
+library(data.table)
+```
+
+```
+## 
+## Attaching package: 'data.table'
+## 
+## The following objects are masked from 'package:dplyr':
+## 
+##     between, last
+```
+
+```r
+library(lattice)
+library(knitr)
+
 # read data
 data <- read.csv("activity.csv")
 
@@ -50,7 +66,7 @@ dailysteps <- summarize(dategrp, sumsteps = sum(steps))
 
 ```r
 png(file = "figure/plot1.png")
-hist(dailysteps$sumsteps, col = "red", main = "Histogram of number of steps taken per day", xlab = "No. of Steps", ylab = "Frequency")
+hist(dailysteps$sumsteps, col = "red", main = "Histogram of number of steps taken per day", xlab = "No. of Steps per Day", ylab = "Frequency")
 dev.off()
 ```
 
@@ -136,19 +152,6 @@ sum(is.na(data$steps))
 
 
 ```r
-library(data.table)
-```
-
-```
-## 
-## Attaching package: 'data.table'
-## 
-## The following objects are masked from 'package:dplyr':
-## 
-##     between, last
-```
-
-```r
 DT <- data.table(data)
 setkey(DT, interval)
 ```
@@ -164,9 +167,15 @@ data2 <- DT[,steps := ifelse(is.na(steps), median(steps, na.rm=TRUE), steps), by
 
 
 ```r
-# create histogram of steps taken per day with imputed means included
+# create group for dates
+dategrp2 <- group_by(data2, date)
+        
+# calculate sum of steps by date
+dailysteps2 <- summarize(dategrp2, sumsteps = sum(steps))
+
+# create histogram of steps taken per day with imputed medians included
 png(file = "figure/plot3.png")
-hist(data2$steps, col = "red", main = "Histogram of No. of steps taken per day w/ imputed means", xlab = "No. of Steps", ylab = "Frequency")
+hist(dailysteps2$sumsteps, col = "red", main = "Histogram of No. of steps taken per day w/ imputed medians", xlab = "No. of Steps per day", ylab = "Frequency")
 dev.off()
 ```
 
@@ -186,11 +195,6 @@ summarize(data2, mean_steps=mean(steps), median_steps=median(steps))
 ```
 
 ![](figure/plot3.png)
-
-Do these values differ from the estimates from the first part of the assignment? 
-
-
-What is the impact of imputing missing data on the estimates of the total daily number of steps?
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
@@ -270,9 +274,6 @@ data2$day <- weekdays(as.Date(data2$date))
 
 
 ```r
-# load lattic library
-library(lattice)
-        
 # create group for intervals
 intgrp2 <- group_by(data2, interval, daycat)
 
